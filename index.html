@@ -7,7 +7,7 @@
   <!-- Tailwind CSS CDN for utility spacing/layout (optional fallback) -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link rel="stylesheet" href="index.css">
-  <!-- Supabase CDN -->
+  <!-- Supabase CDN - LOAD FIRST BEFORE supabase.js -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="flex items-center justify-center p-4 min-h-screen">
@@ -106,7 +106,7 @@
     </div>
   </div>
 
-  <!-- Scripts -->
+  <!-- Scripts - Supabase library MUST load before supabase.js -->
   <script src="js/supabase.js"></script>
   <script src="js/auth.js"></script>
   <script>
