@@ -5,10 +5,17 @@
   let supabaseUrl = localStorage.getItem('supabase_url') || window.ENV_SUPABASE_URL || 'https://qtcdtudnzlvrvtyyygwa.supabase.co';
   let supabaseKey = localStorage.getItem('supabase_key') || window.ENV_SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0Y2R0dWRuemx2cnZ0eXl5Z3dhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMjEzMzAsImV4cCI6MjA4ODc5NzMzMH0.gVHcnBmD06MAMf7kw4QqHZZapuLqZ03Bqh4lFCPCu3k';
 
+  // Clean up URL if it has /rest/v1/ or trailing slashes
+  if (supabaseUrl) {
+    supabaseUrl = supabaseUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
+  }
+
   window.initSupabase = function(url, key) {
+    // Clean URL
+    url = url.replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
     const { createClient } = window.supabase;
     window.supabaseClient = createClient(url, key);
-    console.log("Supabase Client initialized successfully!");
+    console.log("Supabase Client initialized successfully with URL:", url);
   };
 
   if (!supabaseUrl || !supabaseKey) {
@@ -46,6 +53,7 @@
           <div>
             <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">SUPABASE URL</label>
             <input type="text" id="setup-url" class="input-field mt-4" placeholder="https://xxxxxx.supabase.co" />
+            <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px; display: block;">⚠️ Jangan tambahkan /rest/v1/ di akhir URL</small>
           </div>
           <div>
             <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">SUPABASE ANON KEY</label>
@@ -63,7 +71,9 @@
       const keyInput = document.getElementById('setup-key').value.trim();
 
       if (urlInput && keyInput) {
-        localStorage.setItem('supabase_url', urlInput);
+        // Clean URL before saving
+        const cleanedUrl = urlInput.replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
+        localStorage.setItem('supabase_url', cleanedUrl);
         localStorage.setItem('supabase_key', keyInput);
         window.location.reload();
       } else {
