@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mocha Tests for Quiz App</title>
+  <!-- Mocha CSS -->
+  <link href="https://unpkg.com/mocha@10.2.0/mocha.css" rel="stylesheet" />
+</head>
+<body>
+  <div id="mocha"></div>
+  
+  <!-- Setup Mock Environment -->
+  <script>
+    // Mock Supabase Client for tests
+    window.supabaseClient = {
+      from: function() { return this; },
+      select: function() { return this; },
+      eq: function() { return this; },
+      single: function() { return Promise.resolve({ data: {}, error: null }); }
+    };
+  </script>
+
+  <!-- Application Scripts -->
+  <script src="../js/supabase.js"></script>
+  <script src="../js/timer.js"></script>
+  <script src="../js/auth.js"></script>
+
+  <!-- Mocha and Chai Setup -->
+  <script src="https://unpkg.com/mocha@10.2.0/mocha.js"></script>
+  <script src="https://unpkg.com/chai@4.3.7/chai.js"></script>
+  <script>
+    mocha.setup('bdd');
+    const expect = chai.expect;
+  </script>
+
+  <!-- Test Scripts -->
+  <script src="test-supabase.js"></script>
+  <script src="test-timer.js"></script>
+  <script src="test-auth.js"></script>
+
+  <!-- Run Tests -->
+  <script>
+    mocha.run();
+  </script>
+</body>
+</html>
