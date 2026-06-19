@@ -9,6 +9,7 @@ let currentQuestionIndex = 0;
 document.addEventListener('DOMContentLoaded', () => {
   const roomCode = localStorage.getItem('client_room_code');
   const participantName = localStorage.getItem('client_participant_name');
+  const department = localStorage.getItem('client_department') || '-';
 
   if (!roomCode || !participantName) {
     alert("Informasi room atau nama tidak ditemukan! Kembali ke Portal.");
@@ -26,10 +27,10 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  initializeClientSession(roomCode, participantName);
+  initializeClientSession(roomCode, participantName, department);
 });
 
-async function initializeClientSession(roomCode, name) {
+async function initializeClientSession(roomCode, name, department) {
   // 1. Fetch Room details
   const { data: room, error } = await window.supabaseClient
     .from('quiz_rooms')
@@ -61,28 +62,51 @@ async function initializeClientSession(roomCode, name) {
     const { data, error } = await window.supabaseClient
       .from('participants')
       .insert([
-        { room_id: room.id, participant_name: name, join_time: new Date() }
-      ], { returning: 'representation' })
+        { room_id: room.id, participant_name: name, department: department, join_time: new Date() }
+      ])
+      .select()
       .single();
+      
+    if (error) throw error;
     participant = data;
-    joinError = error;
   } catch (e) {
-    // If insert fails due to conflict (HTTP 409), fetch existing participant
-    console.warn('Insert participant failed, attempting fetch:', e);
-    const { data, error } = await window.supabaseClient
-      .from('participants')
-      .select('*')
-      .eq('room_id', room.id)
-      .eq('participant_name', name)
-      .single();
-    participant = data;
-    joinError = error;
+    console.warn('Insert with department failed, trying without department...', e);
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('participants')
+        .insert([
+          { room_id: room.id, participant_name: name, join_time: new Date() }
+        ])
+        .select()
+        .single();
+        
+      if (error) throw error;
+      participant = data;
+    } catch (fallbackErr) {
+      console.warn('Insert failed (likely conflict), attempting fetch:', fallbackErr);
+      const { data, error } = await window.supabaseClient
+        .from('participants')
+        .select('*')
+        .eq('room_id', room.id)
+        .eq('participant_name', name)
+        .single();
+      participant = data;
+      joinError = error;
+    }
   }
   if (joinError) {
     console.error('Participant registration error:', joinError);
   }
-  clientParticipant = participant;
-  console.log('Registered participant:', participant);
+  clientParticipant = participant || {
+    id: 'temp-' + Date.now(),
+    participant_name: name,
+    department: department,
+    room_id: room.id
+  };
+  // Ensure department is available even if db column is missing
+  clientParticipant.department = clientParticipant.department || department;
+  
+  console.log('Registered participant:', clientParticipant);
 
   // 3. Render participants in waiting room
   updateWaitingParticipants();

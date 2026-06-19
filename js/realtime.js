@@ -10,7 +10,7 @@ const RealtimeManager = {
 
     // Listen to changes in the participants table for this room
     this.participantsSubscription = window.supabaseClient
-      .channel('waiting-room-participants')
+      .channel(`waiting-room-${roomId}`)
       .on(
         'postgres_changes',
         {
@@ -32,7 +32,7 @@ const RealtimeManager = {
 
     // Listen to participant answers
     this.answersSubscription = window.supabaseClient
-      .channel('active-quiz-answers')
+      .channel(`active-quiz-answers-${roomId}`)
       .on(
         'postgres_changes',
         {
@@ -50,7 +50,7 @@ const RealtimeManager = {
 
     // Listen to participant updates (submits, scores)
     this.participantsSubscription = window.supabaseClient
-      .channel('active-quiz-participants')
+      .channel(`active-quiz-participants-${roomId}`)
       .on(
         'postgres_changes',
         {
@@ -72,7 +72,7 @@ const RealtimeManager = {
 
     // Client listens to the room state changes
     this.activeRoomSubscription = window.supabaseClient
-      .channel('client-room-sync')
+      .channel(`client-room-sync-${roomCode}`)
       .on(
         'postgres_changes',
         {
@@ -84,6 +84,30 @@ const RealtimeManager = {
         (payload) => {
           console.log('Realtime Room state changed:', payload.new);
           onStateChange(payload.new);
+        }
+      )
+      .subscribe();
+  },
+
+  subscribeToClientRank(roomId, onParticipantsUpdate) {
+    if (this.participantsSubscription) {
+      window.supabaseClient.removeChannel(this.participantsSubscription);
+    }
+
+    // Listen to participant updates (submits, scores)
+    this.participantsSubscription = window.supabaseClient
+      .channel(`client-rank-updates-${roomId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'participants',
+          filter: `room_id=eq.${roomId}`
+        },
+        (payload) => {
+          console.log('Realtime participant updated for rank:', payload);
+          onParticipantsUpdate();
         }
       )
       .subscribe();

@@ -28,6 +28,10 @@
           <label class="text-xs text-gray-400 font-bold">NAMA LENGKAP</label>
           <input type="text" id="join-name" class="input-field mt-1" placeholder="Masukkan nama Anda...">
         </div>
+        <div>
+          <label class="text-xs text-gray-400 font-bold">DEPARTEMEN</label>
+          <input type="text" id="join-department" class="input-field mt-1" placeholder="Contoh: HRD, Front Office...">
+        </div>
         <button id="btn-join-room" class="btn btn-primary w-full mt-2">Gabung Kuis</button>
       </div>
     </div>
@@ -194,9 +198,10 @@
     document.getElementById('btn-join-room').addEventListener('click', async () => {
       const roomCode = document.getElementById('join-room-code').value.trim().toUpperCase();
       const name = document.getElementById('join-name').value.trim();
+      const department = document.getElementById('join-department').value.trim();
 
-      if (!roomCode || !name) {
-        alert('Mohon masukkan Kode Room dan Nama Anda!');
+      if (!roomCode || !name || !department) {
+        alert('Mohon masukkan Kode Room, Nama, dan Departemen Anda!');
         return;
       }
 
@@ -222,6 +227,7 @@
         localStorage.setItem('client_room_code', roomCode);
         localStorage.setItem('client_room_id', room.id);
         localStorage.setItem('client_participant_name', name);
+        localStorage.setItem('client_department', department);
         
         window.location.href = 'client.html';
       } catch (err) {

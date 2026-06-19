@@ -99,7 +99,7 @@ function renderQuestionListForQuiz() {
       <label for="chk-q-${q.id}" class="text-sm cursor-pointer flex-1">
         <div class="font-medium text-gray-200">${escapeHTML(q.question_text)}</div>
         <div class="text-xs text-gray-400 mt-1">
-          Kategori: <span class="text-indigo-400">${escapeHTML(q.category || 'Umum')}</span> | Jawaban: <span class="text-green-400">${q.correct_option}</span>
+          Kategori: <span class="text-indigo-400">${escapeHTML(q.category || 'Umum')}</span>
         </div>
       </label>
     `;

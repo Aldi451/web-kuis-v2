@@ -73,6 +73,12 @@ async function submitQuizAnswers(isAutoSubmit = false) {
 
   // 4. Render Results Screen
   showResultPanel(finalScore, status, correctCount, incorrectCount, answersPayload);
+
+  // 5. Start real-time rank subscription
+  window.RealtimeManager.subscribeToClientRank(clientRoom.id, () => {
+    updateClientRank();
+  });
+  updateClientRank(); // Initial fetch
 }
 
 function showResultPanel(score, status, correct, incorrect, answers) {
@@ -104,6 +110,10 @@ function showResultPanel(score, status, correct, incorrect, answers) {
   // Setup client printable card values
   document.getElementById('pdf-date').textContent = `Tanggal: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
   document.getElementById('pdf-participant-name').textContent = clientParticipant.participant_name;
+  
+  const pdfDept = document.getElementById('pdf-department');
+  if (pdfDept) pdfDept.textContent = clientParticipant.department || '-';
+  
   document.getElementById('pdf-quiz-name').textContent = clientRoom.quiz_name;
   document.getElementById('pdf-score').textContent = score;
   document.getElementById('pdf-status').textContent = status;
@@ -168,7 +178,7 @@ function downloadClientPDF() {
 
   const opt = {
     margin:       10,
-    filename:     `Quiz_Result_${clientParticipant.participant_name.replace(/\s+/g, '_')}.pdf`,
+    filename:     `${clientRoom.quiz_name.replace(/\s+/g, '_')}.pdf`,
     image:        { type: 'jpeg', quality: 0.98 },
     html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -184,6 +194,44 @@ function escapeHTML(str) {
   return str.replace(/[&<>'"]/g, 
     tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
   );
+}
+
+async function updateClientRank() {
+  const { data: participants, error } = await window.supabaseClient
+    .from('participants')
+    .select('id, score, submit_time')
+    .eq('room_id', clientRoom.id)
+    .not('submit_time', 'is', null);
+
+  if (error || !participants) {
+    console.error('Failed to fetch participants for ranking:', error);
+    return;
+  }
+
+  // Sort participants by score DESC and submit_time ASC
+  participants.sort((a, b) => {
+    if (b.score !== a.score) {
+      return b.score - a.score; // Highest score first
+    }
+    // If scores are equal, sort by submit_time ASC (earliest time first)
+    const timeA = new Date(a.submit_time).getTime();
+    const timeB = new Date(b.submit_time).getTime();
+    return timeA - timeB;
+  });
+
+  // Find client rank
+  const rankIndex = participants.findIndex(p => p.id === clientParticipant.id);
+  const rank = rankIndex !== -1 ? rankIndex + 1 : '-';
+
+  // Update UI
+  const rankElement = document.getElementById('result-rank');
+  if (rankElement) {
+    rankElement.textContent = rank;
+  }
+  const pdfRankElement = document.getElementById('pdf-rank');
+  if (pdfRankElement) {
+    pdfRankElement.textContent = rank;
+  }
 }
 
 window.submitQuizAnswers = submitQuizAnswers;
